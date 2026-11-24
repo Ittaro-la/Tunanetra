@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#17181a">
+<title>Spider Sense — Kamera</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Bar atas: identitas singkat + status koneksi server. -->
+    <header class="topbar">
+      <span class="brand">Spider&nbsp;Sense<span class="brand-tag">kamera</span></span>
+      <div class="topbar-status">
+        <p id="connStatus" class="chip" aria-live="polite">Menghubungkan ke server...</p>
+        <p id="esp32Status" class="chip" aria-live="polite">Jalur tombol fisik belum dihubungkan.</p>
+      </div>
+    </header>
+
+    <!-- Feed kamera: elemen utama halaman ini. -->
+    <main class="stage">
+      <section class="camera-wrap" aria-label="Kamera">
+        <video id="preview" autoplay playsinline muted></video>
+        <img id="serverPreview" alt="Pratinjau webcam server" hidden>
+        <canvas id="overlayCanvas" aria-hidden="true"></canvas>
+
+        <div class="feed-top">
+          <span class="live"><i class="live-dot" aria-hidden="true"></i>LIVE</span>
+          <span id="deviceStatus" class="feed-chip" aria-live="polite">Perangkat belum dipasangkan.</span>
+        </div>
+        <p id="detectStatus" class="feed-caption" aria-live="polite">Kamera siap. Deteksi berjalan hanya saat Anda memberi perintah.</p>
+      </section>
+
+      <!-- Ringkasan hasil: satu blok teks, tanpa card bertumpuk. -->
+      <section class="readout" aria-label="Hasil">
+        <p id="quickStatus" class="readout-mode" role="status">Mode siap. AI tidak berjalan terus-menerus.</p>
+        <p id="resultText" aria-live="polite">Belum ada hasil.</p>
+        <p id="resultWarnings"></p>
+        <canvas id="resultCanvas" aria-label="Snapshot hasil deteksi" hidden></canvas>
+        <img id="resultSnapshot" alt="Snapshot yang dianalisis" hidden>
+        <audio id="resultAudio"></audio>
+      </section>
+    </main>
+
+    <!--
+      Panel kontrol: sengaja disembunyikan di balik satu <details> agar halaman
+      terasa sebagai kamera eksternal, bukan dashboard. Semua kontrol lama tetap
+      ada di DOM dengan id yang sama, jadi seluruh event listener di app.js
+      (pairing, pilih kamera, quick command, suara legacy) tidak berubah.
+    -->
+    <details class="panel" id="controlPanel">
+      <summary>Pengaturan &amp; kontrol</summary>
+      <div class="panel-body">
+
+        <div class="field">
+          <label for="cameraSelect">Pilih kamera</label>
+          <select id="cameraSelect" aria-label="Pilih kamera"></select>
+          <div class="row">
+            <button id="retryCameraBtn" type="button">Hubungkan ulang kamera</button>
+            <button id="replayBtn" type="button">Dengar ulang jawaban</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="deviceIdInput">ID perangkat (tertulis pada alat)</label>
+          <input id="deviceIdInput" type="text" inputmode="text" autocomplete="off"
+                 placeholder="contoh: esp32-A1" aria-describedby="deviceHelp">
+          <p id="deviceHelp" class="hint">Masukkan sekali saja per sesi pemakaian.</p>
+          <button id="pairBtn" type="button" class="primary">Hubungkan Perangkat</button>
+        </div>
+
+        <!--
+          Tombol layar untuk uji manual. Tombol fisik ESP32 TIDAK lewat halaman ini:
+          backend memicu ESP32-CAM sendiri dan halaman hanya menampilkan statusnya.
+        -->
+        <div class="field">
+          <p class="field-title">Uji manual deteksi</p>
+          <div class="row quick-row">
+            <button type="button" class="quick" data-mode="objek">Deteksi Objek</button>
+            <button type="button" class="quick" data-mode="rambu">Deteksi Rambu Lalu Lintas</button>
+          </div>
+          <p id="esp32Mapping" class="hint">Deteksi objek otomatis saat sensor ultrasonik membaca benda sekitar 1 m (mode biasa);
+            deteksi rambu berjalan terus-menerus. Tombol layar memotret lewat ESP32-CAM di backend dan tetap berfungsi meskipun ESP32 mati.</p>
+          <p id="esp32Log" class="log" aria-live="off"></p>
+          <p class="hint">50 cm adalah target uji, bukan jaminan jangkauan. Sistem tidak memastikan jalur aman.</p>
+        </div>
+
+        <details id="legacyVoice" class="subpanel">
+          <summary>Integrasi suara lama / ESP32 (opsional)</summary>
+          <button id="talkBtn" type="button" aria-pressed="false">TEKAN DAN TAHAN UNTUK BERBICARA</button>
+          <p id="talkStatus" class="hint" aria-live="assertive">Siap mendengarkan.</p>
+        </details>
+
+      </div>
+    </details>
+  </div>
+
+  <!-- Kanvas kerja (tidak pernah tampil), dipakai untuk snapshot & deteksi. -->
+  <canvas id="snapshotCanvas" hidden></canvas>
+  <canvas id="detectCanvas" hidden></canvas>
+
+  <script src="/app.js"></script>
+</body>
+</html>
